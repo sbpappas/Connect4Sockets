@@ -7,7 +7,11 @@ use tokio::sync::{mpsc, RwLock};
 use tokio_stream::wrappers::UnboundedReceiverStream;
 use warp::ws::{Message, WebSocket};
 use warp::Filter;
+use warp::reject::{self, Reject};
+use warp::http::StatusCode; // Import StatusCode
 
+
+static MAX_USERS: usize = 2;
 static NEXT_USERID: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(1);
 
 type Users = Arc<RwLock<HashMap<usize, mpsc::UnboundedSender<Result<Message, warp::Error>>>>>;
@@ -16,7 +20,7 @@ type Users = Arc<RwLock<HashMap<usize, mpsc::UnboundedSender<Result<Message, war
 async fn main() {
     let addr = env::args()
         .nth(1)
-        .unwrap_or_else(|| "127.0.0.1:8080".to_string());
+        .unwrap_or_else(|| "127.0.0.1:8081".to_string());
     let socket_address: SocketAddr = addr.parse().expect("valid socket Address");
 
     let users = Users::default();
@@ -35,10 +39,23 @@ async fn main() {
         });
 
     // GET /ws
-    let chat = warp::path("ws")
+    /*let chat = warp::path("ws")
         .and(warp::ws())
         .and(users)
         .map(|ws: warp::ws::Ws, users| ws.on_upgrade(move |socket| connect(socket, users)));
+*/
+    let chat = warp::path("ws")
+    .and(warp::ws())
+    .and(users.clone())
+    .and_then(|ws: warp::ws::Ws, users: Users| {
+        async move {
+            if users.read().await.len() < MAX_USERS {
+                Ok(ws.on_upgrade(move |socket| connect(socket, users)))
+            } else {
+                println!("Third user attempted joining, was rejected.");
+                Err(reject::custom(TooManyRequests))           }
+        }
+    });
 
     let files = warp::fs::dir("./static");
 
@@ -93,3 +110,9 @@ async fn disconnect(my_id: usize, users: &Users) {
 
     users.write().await.remove(&my_id);
 }
+
+// Custom rejection type for too many requests
+#[derive(Debug)]
+struct TooManyRequests;
+
+impl Reject for TooManyRequests {}
