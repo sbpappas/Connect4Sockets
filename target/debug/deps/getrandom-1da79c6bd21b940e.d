@@ -1,0 +1,11 @@
+/Users/Samuel/Desktop/Spring 2024/NextGen/rust_2/warp-websockets-example/target/debug/deps/libgetrandom-1da79c6bd21b940e.rmeta: /Users/Samuel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/getrandom-0.1.16/src/lib.rs /Users/Samuel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/getrandom-0.1.16/src/error.rs /Users/Samuel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/getrandom-0.1.16/src/util.rs /Users/Samuel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/getrandom-0.1.16/src/error_impls.rs /Users/Samuel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/getrandom-0.1.16/src/util_libc.rs /Users/Samuel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/getrandom-0.1.16/src/use_file.rs /Users/Samuel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/getrandom-0.1.16/src/macos.rs
+
+/Users/Samuel/Desktop/Spring 2024/NextGen/rust_2/warp-websockets-example/target/debug/deps/getrandom-1da79c6bd21b940e.d: /Users/Samuel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/getrandom-0.1.16/src/lib.rs /Users/Samuel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/getrandom-0.1.16/src/error.rs /Users/Samuel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/getrandom-0.1.16/src/util.rs /Users/Samuel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/getrandom-0.1.16/src/error_impls.rs /Users/Samuel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/getrandom-0.1.16/src/util_libc.rs /Users/Samuel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/getrandom-0.1.16/src/use_file.rs /Users/Samuel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/getrandom-0.1.16/src/macos.rs
+
+/Users/Samuel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/getrandom-0.1.16/src/lib.rs:
+/Users/Samuel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/getrandom-0.1.16/src/error.rs:
+/Users/Samuel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/getrandom-0.1.16/src/util.rs:
+/Users/Samuel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/getrandom-0.1.16/src/error_impls.rs:
+/Users/Samuel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/getrandom-0.1.16/src/util_libc.rs:
+/Users/Samuel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/getrandom-0.1.16/src/use_file.rs:
+/Users/Samuel/.cargo/registry/src/index.crates.io-6f17d22bba15001f/getrandom-0.1.16/src/macos.rs:

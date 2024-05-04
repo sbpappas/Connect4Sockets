@@ -116,7 +116,7 @@ async fn broadcast_msg(msg: Message, users: &Users) {
     if let Ok(json_str) = msg.to_str() {
         if let Ok(json) = serde_json::from_str::<serde_json::Value>(json_str) {
             if let Some(board) = json.get("board") {
-                println!("in broadcast mess");
+                //println!("in broadcast mess");
                 for (&_uid, tx) in users.read().await.iter() {
                     tx.send(Ok(Message::text(json_str.to_owned()))).expect("Failed to send message");
                 }
