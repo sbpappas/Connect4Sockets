@@ -6,12 +6,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="main.css" />
     <title>Actic</title>
+    <style>
+      canvas {
+          border: 1px solid black;
+      }
+  </style>
   </head>
   <body>
     <h1>Hello all!</h1>
     <input id="input" type="text" />
     <button id="btn">Send</button>
     <pre id="log"></pre>
+
+    <canvas id="connectFourCanvas" width="400" height="400"></canvas>
+
     <script src="/main.js"></script>
+    <script>
+      canvas.addEventListener("click", function (event) {
+        const col = Math.floor(event.offsetX / CELL_SIZE);
+        dropPiece(col);
+    });
+    drawBoard();
+    
+    </script>
   </body>
 </html>
