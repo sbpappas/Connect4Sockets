@@ -61,11 +61,18 @@ conn.onopen = function () {
   log("Connected.");
 };
 
-conn.onmessage = function (e) {
+/*conn.onmessage = function (e) {
   log("Received: " + e.data);
   document.getElementById("log").textContent =
     document.getElementById("log").textContent + "\n" + e.data;
+};*/
+conn.onmessage = function (e) {
+  const gameState = JSON.parse(e.data);
+  board = gameState.board;
+  currentPlayer = gameState.currentPlayer;
+  drawBoard();
 };
+
 
 conn.onclose = function () {
   log("Disconnected.");
@@ -73,12 +80,19 @@ conn.onclose = function () {
 };
 
 function send() {
-  conn.send();
+  
+  const gameState = {
+      board: board,
+      currentPlayer: currentPlayer
+  };
+  
+  conn.send(JSON.stringify(gameState));
+  //console.log(gameState);
   //conn.send(document.getElementById("input").value);
   //conn.send(document.getElementById("connectFourCanvas"))
 }
 
-document.getElementById("connectFourCanvas").addEventListener("click", send);
+//document.getElementById("connectFourCanvas").addEventListener("click", send);
 
 function drawBoard() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -112,6 +126,7 @@ function dropPiece(col) {
             } else {
                 currentPlayer = currentPlayer === 1 ? 2 : 1;
             }
+            send();
             return;
         }
     }
@@ -140,6 +155,7 @@ function countInDirection(row, col, player, dRow, dCol) {
     }
     return 1 + countInDirection(row + dRow, col + dCol, player, dRow, dCol);
 }
+
 
 function resetGame() {
     board = [];
