@@ -1,2 +1,2 @@
-cargo:rustc-env=TYPENUM_BUILD_CONSTS=/Users/Samuel/Desktop/Spring 2024/NextGen/rust_2/warp-websockets-example/target/debug/build/typenum-92bd073c05862cb5/out/consts.rs
-cargo:rustc-env=TYPENUM_BUILD_OP=/Users/Samuel/Desktop/Spring 2024/NextGen/rust_2/warp-websockets-example/target/debug/build/typenum-92bd073c05862cb5/out/op.rs
+cargo:rustc-env=TYPENUM_BUILD_CONSTS=/Users/bowl/NextGen/Connect4Sockets/target/debug/build/typenum-92bd073c05862cb5/out/consts.rs
+cargo:rustc-env=TYPENUM_BUILD_OP=/Users/bowl/NextGen/Connect4Sockets/target/debug/build/typenum-92bd073c05862cb5/out/op.rs

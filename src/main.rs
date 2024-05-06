@@ -8,7 +8,8 @@ use tokio_stream::wrappers::UnboundedReceiverStream;
 use warp::ws::{Message, WebSocket};
 use warp::Filter;
 use warp::reject::{self, Reject};
-use serde::{Deserialize, Serialize};
+// use serde::{Deserialize, Serialize};
+use serde_json::json;
 
 //use warp::http::StatusCode; // Import StatusCode
 
@@ -90,11 +91,24 @@ async fn connect(ws: WebSocket, users: Users) {
     tokio::spawn(rx.forward(user_tx));
     users.write().await.insert(my_id, tx);
 
+    //Initailly sending id to js
+    let id = json!({
+    "board": vec![vec![0; 7]; 6],
+    "currentPlayer": 1,
+    "my_id": my_id 
+    });
+    let connection_msg = serde_json::to_string(&id).unwrap();
+    // println!("connection message: {}", connection_msg.to_string());
+    for (&_uid, tx) in users.read().await.iter() {
+        tx.send(Ok(Message::text(connection_msg.to_owned()))).expect("Failed to send message");
+    }
+
+
     // Reading and broadcasting messages
     while let Some(result) = user_rx.next().await {
         //println!("Received message in serv: {:?}", result);
 
-        broadcast_msg(result.expect("Failed to fetch message"), &users).await;
+        broadcast_msg(result.expect("Failed to fetch message"), &users, my_id).await;
     }
 
     // Disconnect
@@ -110,19 +124,22 @@ async fn connect(ws: WebSocket, users: Users) {
     }
 }*/
 
-use serde_json::Value;
+// use serde_json::Value;
 
-async fn broadcast_msg(msg: Message, users: &Users) {
+async fn broadcast_msg(msg: Message, users: &Users, my_id: usize) {
     if let Ok(json_str) = msg.to_str() {
-        if let Ok(json) = serde_json::from_str::<serde_json::Value>(json_str) {
-            if let Some(board) = json.get("board") {
-                //println!("in broadcast mess");
-                for (&_uid, tx) in users.read().await.iter() {
-                    tx.send(Ok(Message::text(json_str.to_owned()))).expect("Failed to send message");
-                }
-                return;
+        if let Ok(mut json) = serde_json::from_str::<serde_json::Value>(json_str) {
+            json["my_id"] = json!(my_id);
+            //println!("in broadcast mess");
+            let new_msg = serde_json::to_string(&json).unwrap();
+            // println!("broadcasting: {:?}", new_msg);
+            for (&_uid, tx) in users.read().await.iter() {
+                tx.send(Ok(Message::text(new_msg.to_owned()))).expect("Failed to send message");
+
             }
+            return;
         }
+        
     }
     for (&_uid, tx) in users.read().await.iter() {
         tx.send(Ok(msg.clone())).expect("Failed to send message");

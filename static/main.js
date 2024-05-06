@@ -1,45 +1,13 @@
-/*let log = console.log;
-
-const wsUri =
-  ((window.location.protocol == "https:" && "wss://") || "ws://") +
-  window.location.host +
-  "/ws";
-conn = new WebSocket(wsUri);
-
-log("Connecting...");
-
-conn.onopen = function () {
-  log("Connected.");
-};
-
-conn.onmessage = function (e) {
-  log("Received: " + e.data);
-  document.getElementById("log").textContent =
-    document.getElementById("log").textContent + "\n" + e.data;
-};
-
-conn.onclose = function () {
-  log("Disconnected.");
-  conn = null;
-};
-
-function send() {
-  conn.send(document.getElementById("input").value);
-  //conn.send(document.getElementById("connectFourCanvas"))
-}
-
-document.getElementById("btn").addEventListener("click", send);
-*/
-// connectFour.js
-
 const canvas = document.getElementById("connectFourCanvas");
 const ctx = canvas.getContext("2d");
+const whichPlayer = document.getElementById("playerID");
 
 const ROWS = 6;
 const COLS = 7;
 const CELL_SIZE = 50;
 const PLAYER_ONE_COLOR = "red";
 const PLAYER_TWO_COLOR = "yellow";
+let UID = '';
 
 let currentPlayer = 1;
 let board = [];
@@ -57,9 +25,21 @@ conn = new WebSocket(wsUri);
 
 log("Connecting...");
 
+
 conn.onopen = function () {
   log("Connected.");
+  conn.onmessage = function (e) {
+    const init = JSON.parse(e.data);
+    UID = init.my_id;
+    if (UID % 2 === 1 && whichPlayer.innerHTML == "") {
+      whichPlayer.innerHTML = "You are red."
+    } else if (UID % 2 === 0 && whichPlayer.innerHTML == "") {
+      whichPlayer.innerHTML = "You are yellow."
+    } 
+  };
+  log("id: " + UID);
 };
+
 
 /*conn.onmessage = function (e) {
   log("Received: " + e.data);
@@ -70,9 +50,10 @@ conn.onmessage = function (e) {
   const gameState = JSON.parse(e.data);
   board = gameState.board;
   currentPlayer = gameState.currentPlayer;
+  UID = gameState.my_id;
+
   drawBoard();
 };
-
 
 conn.onclose = function () {
   log("Disconnected.");
@@ -116,12 +97,17 @@ function drawBoard() {
 }
 
 function dropPiece(col) {
+  if(currentPlayer == UID){
+    log("id:" + UID);
     for (let row = ROWS - 1; row >= 0; row--) {
         if (board[row][col] === 0) {
             board[row][col] = currentPlayer;
             drawBoard();
             if (checkForWin(row, col)) {
                 alert("Player " + currentPlayer + " wins!");
+                resetGame();
+            } else if(isFull()) {
+                alert("It's a tie!");
                 resetGame();
             } else {
                 currentPlayer = currentPlayer === 1 ? 2 : 1;
@@ -130,6 +116,7 @@ function dropPiece(col) {
             return;
         }
     }
+  }
 }
 
 function checkForWin(row, col) {
@@ -156,6 +143,16 @@ function countInDirection(row, col, player, dRow, dCol) {
     return 1 + countInDirection(row + dRow, col + dCol, player, dRow, dCol);
 }
 
+function isFull() {
+  for(let i = 0; i < ROWS; i++) {
+    for(let j = 0; j < COLS; j++) {
+      if(board[i][j] === 0) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
 
 function resetGame() {
     board = [];
