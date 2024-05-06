@@ -58,7 +58,9 @@ conn = new WebSocket(wsUri);
 log("Connecting...");
 
 conn.onopen = function () {
+  
   log("Connected.");
+
 };
 
 /*conn.onmessage = function (e) {
