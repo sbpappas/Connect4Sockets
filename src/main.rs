@@ -158,9 +158,9 @@ async fn broadcast_msg(msg: Message, users: &Users, user_id: &Player) {
     let mut iwon = 0;
     // let mut current_player: Player = Player::Red;
 
-    let player = match user_id {
+    let player: usize = match user_id {
         Player::Red => 1,
-        Player::Yellow => 2
+        Player::Yellow => 2,
     };
 
    
@@ -170,19 +170,20 @@ async fn broadcast_msg(msg: Message, users: &Users, user_id: &Player) {
         let mut state: GameState = serde_json::from_str(&json_str).unwrap();
         let mut new_board: Vec<Vec<usize>> =  Vec::new();
         println!("state: {:?}", state);
+        
         // Add my_id to the JSON object
         let update = to_board(state.board);
         // println!("col: {}", state.move_col);
         // *players.get(&user_id).unwrap(),
-        // if player == state.current_player {
+        if player == state.current_player {
             new_board = play(*user_id, update, state.move_col);
             // current_player = match current_player {
             //     Player::Red => Player::Yellow,
             //     Player::Yellow => Player::Red,
             // };
-        // } else {
-        //     new_board = update.display();
-        // }
+        } else {
+            new_board = update.display();
+        }
         let win_board = to_board(new_board.clone());
         let winner = win_board.check_winner();
         match winner {
@@ -199,10 +200,7 @@ async fn broadcast_msg(msg: Message, users: &Users, user_id: &Player) {
                         iwon = 3;
                     },
         }
-        // current_player = match current_player {
-        //     Player::Red => Player::Yellow,
-        //     Player::Yellow => Player::Red,
-        // };
+
 
         let msg = json!({
             "board": new_board,
@@ -252,7 +250,7 @@ struct GameState {
     board: Vec<Vec<usize>>,  // 2D vector representing the game board
     move_col: usize,
     won: bool,
-    // current_player: usize,
+    current_player: usize,
 }
 
 

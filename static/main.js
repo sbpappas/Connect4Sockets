@@ -42,11 +42,9 @@ conn.onmessage = function (e) {
   board = gameState.board;
   won = gameState.won;
   winner = gameState.winner;
-  if (gameState.current_player !== null) {
-    currentPlayer = gameState.current_player;
-  } else {
-    currentPlayer = 2;
-  }
+  currentPlayer = gameState.currentPlayer;
+  console.log("onmessage cur: " + currentPlayer);
+
   drawBoard();
   
   checkForWin();
@@ -66,7 +64,7 @@ function send() {
       board: board,
       move_col: move_col,
       won: won,
-      // current_player: currentPlayer
+      current_player: currentPlayer
   };
   console.log(gameState);
   conn.send(JSON.stringify(gameState));
@@ -115,8 +113,8 @@ function checkForWin() {
 }
 
 function dropPiece() {
-  send();
   currentPlayer = currentPlayer === 1 ? 2 : 1;
+  send();
   return;
 }
 
