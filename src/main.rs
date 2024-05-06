@@ -1,11 +1,7 @@
 use futures::StreamExt;
-use warp::filters::query;
 use std::env;
 use std::fs;
-use std::hash::Hash;
 use std::net::SocketAddr;
-use std::os::macos::raw::stat;
-use std::thread::current;
 use std::{collections::HashMap, sync::Arc};
 use tokio::sync::{mpsc, RwLock};
 use tokio_stream::wrappers::UnboundedReceiverStream;
@@ -45,13 +41,6 @@ async fn main() {
             format!("Hello, {}!", name.unwrap_or_else(|| "world".to_string()))
         });
 
-    // GET /ws
-    /*let chat = warp::path("ws")
-        .and(warp::ws())
-        .and(users)
-        .map(|ws: warp::ws::Ws, users| ws.on_upgrade(move |socket| connect(socket, users)));
-*/
-
     let chat = warp::path("ws")
     .and(warp::ws())
     .and(users.clone())
@@ -65,9 +54,7 @@ async fn main() {
         }
     });
 
-    // for key in users.keys() {
 
-    // }
 
 
     let files = warp::fs::dir("./static");
@@ -123,34 +110,6 @@ async fn connect(ws: WebSocket, users: Users) {
     disconnect(my_id, &users).await;
 }
 
-/*async fn broadcast_msg(msg: Message, users: &Users) {
-    println!("in broadcast");
-    if let Ok(_) = msg.to_str() {
-        for (&_uid, tx) in users.read().await.iter() {
-            tx.send(Ok(msg.clone())).expect("Failed to send message");
-        }
-    }
-}*/
-
-// use serde_json::Value;
-/* 
-async fn broadcast_msg(msg: Message, users: &Users, my_id: usize) {
-    if let Ok(json_str) = msg.to_str() {
-        if let Ok(json) = serde_json::from_str::<serde_json::Value>(json_str) {
-            if let Some(board) = json.get("board") {
-                //println!("in broadcast mess");
-                
-                for (&_uid, tx) in users.read().await.iter() {
-                    tx.send(Ok(Message::text(json_str.to_owned()))).expect("Failed to send message");
-                }
-                return;
-            }
-        }
-    }
-    for (&_uid, tx) in users.read().await.iter() {
-        tx.send(Ok(msg.clone())).expect("Failed to send message");
-    }
-}*/
 use serde_json::json;
 
 async fn broadcast_msg(msg: Message, users: &Users, user_id: &Player) {
@@ -171,16 +130,10 @@ async fn broadcast_msg(msg: Message, users: &Users, user_id: &Player) {
         let mut new_board: Vec<Vec<usize>> =  Vec::new();
         println!("state: {:?}", state);
         
-        // Add my_id to the JSON object
         let update = to_board(state.board);
-        // println!("col: {}", state.move_col);
-        // *players.get(&user_id).unwrap(),
+
         if player == state.current_player {
             new_board = play(*user_id, update, state.move_col);
-            // current_player = match current_player {
-            //     Player::Red => Player::Yellow,
-            //     Player::Yellow => Player::Red,
-            // };
         } else {
             new_board = update.display();
         }
@@ -209,10 +162,6 @@ async fn broadcast_msg(msg: Message, users: &Users, user_id: &Player) {
             "currentPlayer": player,
         });
 
-        // println!("{:?}", serde_json::to_string(&new_board));
-        
-        // game.updateBoard()
-        // Broadcast the updated JSON object to all users
         for (&_uid, tx) in users.read().await.iter() {
 
             
@@ -399,20 +348,11 @@ fn to_board(json: Vec<Vec<usize>>) -> Board {
 }
 
 fn play(current_player: Player, mut game: Board, col: usize) -> Vec<Vec<usize>> {
-    let mut current_move: Option<Move> = None;
-    current_move = Move::read_move(col, &current_player);
+    let current_move = Move::read_move(col, &current_player);
     let current_move = current_move;
     match current_move {
         Some(e) => { game.update_board(e);
                     return game.display();},
         None => return game.display(),
-    }
-}
-
-async fn get_player(id: usize) -> usize {
-    match id%2 {
-        1 => return 1,
-        0 => return 2,
-        _ => panic!("does not divide")
     }
 }

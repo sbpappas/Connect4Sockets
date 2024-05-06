@@ -1,6 +1,7 @@
 const canvas = document.getElementById("connectFourCanvas");
 const ctx = canvas.getContext("2d");
-const whichPlayer = document.getElementById("player");
+const turn = document.getElementById("turn");
+const you = document.getElementById("player");
 
 const ROWS = 6;
 const COLS = 7;
@@ -10,7 +11,7 @@ const PLAYER_TWO_COLOR = "yellow";
 let move_col = 69;
 let won = false;
 let winner = '';
-let currentPlayer = 1;
+let currentPlayer = 2;
 
 let board = [];
 for (let i = 0; i < ROWS; i++) {
@@ -46,6 +47,11 @@ conn.onmessage = function (e) {
   console.log("onmessage cur: " + currentPlayer);
 
   drawBoard();
+  if (currentPlayer === 1) {
+    turn.innerHTML = "It's Yellow's Turn";
+  } else if (currentPlayer === 2) {
+    turn.innerHTML = "It's Red's Turn";
+  }
   
   checkForWin();
   
@@ -68,8 +74,7 @@ function send() {
   };
   console.log(gameState);
   conn.send(JSON.stringify(gameState));
-  //conn.send(document.getElementById("input").value);
-  //conn.send(document.getElementById("connectFourCanvas"))
+ 
 }
 
 function drawBoard() {
