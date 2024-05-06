@@ -40,6 +40,9 @@ const COLS = 7;
 const CELL_SIZE = 50;
 const PLAYER_ONE_COLOR = "red";
 const PLAYER_TWO_COLOR = "yellow";
+let uid = 0;
+let red_id = 0;
+let yellow_id = 0;
 
 let currentPlayer = 1;
 let board = [];
@@ -70,7 +73,10 @@ conn.onmessage = function (e) {
   const gameState = JSON.parse(e.data);
   board = gameState.board;
   currentPlayer = gameState.currentPlayer;
+  console.log("message received from id: " + gameState.my_id);
+  uid = gameState.my_id;
   drawBoard();
+  
 };
 
 
@@ -116,6 +122,7 @@ function drawBoard() {
 }
 
 function dropPiece(col) {
+  if (uid %2 + 1 === currentPlayer){
     for (let row = ROWS - 1; row >= 0; row--) {
         if (board[row][col] === 0) {
             board[row][col] = currentPlayer;
@@ -123,13 +130,14 @@ function dropPiece(col) {
             if (checkForWin(row, col)) {
                 alert("Player " + currentPlayer + " wins!");
                 resetGame();
-            } else {
-                currentPlayer = currentPlayer === 1 ? 2 : 1;
+            } else {  
+              currentPlayer = currentPlayer === 1 ? 2 : 1;
             }
             send();
             return;
         }
     }
+  }
 }
 
 function checkForWin(row, col) {

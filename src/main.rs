@@ -80,7 +80,7 @@ async fn connect(ws: WebSocket, users: Users) {
     // Bookkeeping
     let my_id = NEXT_USERID.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
     println!("Welcome User {}", my_id);
-
+    
     // Establishing a connection
     let (user_tx, mut user_rx) = ws.split();
     let (tx, rx) = mpsc::unbounded_channel();
