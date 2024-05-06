@@ -9,5 +9,3 @@ extern {
 pub fn greet(name: &str) {
     alert(&format!("Hello, {}!", name));
 }
-
-

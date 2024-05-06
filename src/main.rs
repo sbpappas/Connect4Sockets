@@ -1,7 +1,11 @@
 use futures::StreamExt;
+use warp::filters::query;
 use std::env;
 use std::fs;
+use std::hash::Hash;
 use std::net::SocketAddr;
+use std::os::macos::raw::stat;
+use std::thread::current;
 use std::{collections::HashMap, sync::Arc};
 use tokio::sync::{mpsc, RwLock};
 use tokio_stream::wrappers::UnboundedReceiverStream;
@@ -17,6 +21,7 @@ static MAX_USERS: usize = 2;
 static NEXT_USERID: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(1);
 
 type Users = Arc<RwLock<HashMap<usize, mpsc::UnboundedSender<Result<Message, warp::Error>>>>>;
+type Players = HashMap<usize, Player>;
 
 #[tokio::main]
 async fn main() {
@@ -46,6 +51,7 @@ async fn main() {
         .and(users)
         .map(|ws: warp::ws::Ws, users| ws.on_upgrade(move |socket| connect(socket, users)));
 */
+
     let chat = warp::path("ws")
     .and(warp::ws())
     .and(users.clone())
@@ -58,6 +64,11 @@ async fn main() {
                 Err(reject::custom(TooManyRequests))           }
         }
     });
+
+    // for key in users.keys() {
+
+    // }
+
 
     let files = warp::fs::dir("./static");
 
@@ -80,6 +91,15 @@ async fn connect(ws: WebSocket, users: Users) {
     // Bookkeeping
     let my_id = NEXT_USERID.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
     println!("Welcome User {}", my_id);
+    let mut players: Players = HashMap::new();
+    if my_id % 2 == 0 {
+    players.insert(my_id, Player::Yellow);
+    } else if my_id % 2 == 1 {
+        players.insert(my_id, Player::Red);
+    }
+    // let mut game: GameState = GameState {board: vec![vec![0;7];6], move_col: 9, won: false};
+    println!("players: {:?} ", players.get(&my_id).unwrap());
+    
     
     // Establishing a connection
     let (user_tx, mut user_rx) = ws.split();
@@ -90,11 +110,13 @@ async fn connect(ws: WebSocket, users: Users) {
     tokio::spawn(rx.forward(user_tx));
     users.write().await.insert(my_id, tx);
 
+
     // Reading and broadcasting messages
     while let Some(result) = user_rx.next().await {
         //println!("Received message in serv: {:?}", result);
         //add user id to msg 
-        broadcast_msg(result.expect("Failed to fetch message"), &users, my_id).await;
+        
+        broadcast_msg(result.expect("Failed to fetch message"), &users,  players.get(&my_id).unwrap()).await;
     }
 
     // Disconnect
@@ -110,7 +132,7 @@ async fn connect(ws: WebSocket, users: Users) {
     }
 }*/
 
-use serde_json::Value;
+// use serde_json::Value;
 /* 
 async fn broadcast_msg(msg: Message, users: &Users, my_id: usize) {
     if let Ok(json_str) = msg.to_str() {
@@ -131,18 +153,77 @@ async fn broadcast_msg(msg: Message, users: &Users, my_id: usize) {
 }*/
 use serde_json::json;
 
-async fn broadcast_msg(msg: Message, users: &Users, my_id: usize) {
+async fn broadcast_msg(msg: Message, users: &Users, user_id: &Player) {
     println!("in broadcast");
+    let mut iwon = 0;
+    // let mut current_player: Player = Player::Red;
+
+    let player = match user_id {
+        Player::Red => 1,
+        Player::Yellow => 2
+    };
+
+   
+
+
     if let Ok(json_str) = msg.to_str() {
-        if let Ok(mut json) = serde_json::from_str::<serde_json::Value>(json_str) {
-            // Add my_id to the JSON object
-            json["my_id"] = json!(my_id);
-            // Broadcast the updated JSON object to all users
-            for (&_uid, tx) in users.read().await.iter() {
-                tx.send(Ok(Message::text(json.to_string()))).expect("Failed to send message");
-            }
-            return;
+        let mut state: GameState = serde_json::from_str(&json_str).unwrap();
+        let mut new_board: Vec<Vec<usize>> =  Vec::new();
+        println!("state: {:?}", state);
+        // Add my_id to the JSON object
+        let update = to_board(state.board);
+        // println!("col: {}", state.move_col);
+        // *players.get(&user_id).unwrap(),
+        // if player == state.current_player {
+            new_board = play(*user_id, update, state.move_col);
+            // current_player = match current_player {
+            //     Player::Red => Player::Yellow,
+            //     Player::Yellow => Player::Red,
+            // };
+        // } else {
+        //     new_board = update.display();
+        // }
+        let win_board = to_board(new_board.clone());
+        let winner = win_board.check_winner();
+        match winner {
+            Some(Player::Red) => { iwon = 1;
+                                state.won = true;
+                                },
+            Some(Player::Yellow) => { iwon = 2;
+                                state.won = true;
+                                },
+            None => if !win_board.is_full() {
+                        iwon = 0;
+                    } else {
+                        state.won = true;
+                        iwon = 3;
+                    },
         }
+        // current_player = match current_player {
+        //     Player::Red => Player::Yellow,
+        //     Player::Yellow => Player::Red,
+        // };
+
+        let msg = json!({
+            "board": new_board,
+            "won": state.won,
+            "winner": iwon,
+            "currentPlayer": player,
+        });
+
+        // println!("{:?}", serde_json::to_string(&new_board));
+        
+        // game.updateBoard()
+        // Broadcast the updated JSON object to all users
+        for (&_uid, tx) in users.read().await.iter() {
+
+            
+            tx.send(Ok(Message::text(serde_json::to_string(&msg)
+                .expect("Failed to serialize GameState."))))
+                .expect("Failed to send message");
+        }
+        return;
+    
     }
     // If the message does not contain valid JSON data, simply broadcast it as is
     for (&_uid, tx) in users.read().await.iter() {
@@ -164,22 +245,176 @@ struct TooManyRequests;
 
 impl Reject for TooManyRequests {}
 
+
+//commandline Connect4 game parts
+#[derive(Debug, Deserialize, Serialize)]
 struct GameState {
     board: Vec<Vec<usize>>,  // 2D vector representing the game board
-    current_player: usize,    // Player currently taking a turn
+    move_col: usize,
+    won: bool,
+    // current_player: usize,
 }
 
-fn check_for_win(row: usize, col: usize, board: &Vec<Vec<usize>>) -> bool {
-    // Implementation of win-checking logic
-    return false
+
+
+
+#[derive(Clone, PartialEq, Copy, Debug)]
+enum Player {
+    Red,
+    Yellow,
 }
 
-// Function to drop a piece into a column
-fn drop_piece(col: usize, board: &mut Vec<Vec<usize>>, current_player: &mut usize) {
-    // Implementation of dropping a piece logic
+
+struct Move {
+    player: Player,
+    column: i32,
 }
 
-// Function to reset the game
-fn reset_game(board: &mut Vec<Vec<usize>>, current_player: &mut usize) {
-    // Implementation of resetting the game logic
+impl Move {
+    // reads a move from a column string
+    fn read_move(c: usize, player: &Player) -> Option<Move>{
+
+        if c < 7{
+            return Some(Move{
+                player: player.clone(),
+                column: c as i32,
+            })
+                
+        } else {
+            return None
+        }
+
+    
+    }
+}
+
+struct Board {
+    game_board: Vec<Vec<Option<Player>>>,
+}
+
+impl Board {
+    fn display(&self) -> Vec<Vec<usize>> { //turns into json format
+        let mut json_board: Vec<Vec<usize>> = vec![vec![0;7];6];
+        for i in 0..6{ //iterate through rows
+            // println!("rows: {:?}", self.game_board[i]);
+            for j in 0..7{//iterate thru cols
+                match self.game_board[i][j] {
+                    Some(Player::Red) => json_board[i][j] = 1,
+                    Some(Player::Yellow) => json_board[i][j] = 2,
+                    None => json_board[i][j] = 0,
+                }
+            }
+        }
+        return json_board
+    }
+
+    fn update_board(&mut self, m: Move) {
+        for i in (0..6).rev() {
+            // use m.column-1 because user inputs a num from 1-7, we need 0-6
+            let j: usize = m.column as usize; 
+            if self.game_board[i][j] == None {
+                self.game_board[i][j] = Some(m.player);
+                break;
+            }
+        }
+    }
+    
+
+    fn is_full(&self) -> bool {
+        for j in 0..=6{//move horizontally
+            if self.game_board[0][j] == None { //go through the top row and find if any spot is open
+                return false
+            }
+        }
+        true
+    }
+    
+    
+    fn check_winner(&self) -> Option<Player> {
+        let mut winner: Option<Player> = None;
+        //horizontal check
+        
+        for i in 0..=3{
+            for j in 0..=5{
+                if self.game_board[j][i]== self.game_board[j][i+1] && self.game_board[j][i]== self.game_board[j][i+2] && self.game_board[j][i]== self.game_board[j][i+3] {
+                    if self.game_board[j][i] != None {
+                        winner = self.game_board[j][i]
+                    }
+                }
+            }
+        }
+    
+        //vertical check
+
+        for i in 0..=2{
+            for j in 0..=6{
+                if self.game_board[i][j]== self.game_board[i+1][j] && self.game_board[i][j]== self.game_board[i+2][j] && self.game_board[i][j]== self.game_board[i+3][j] {
+                    if self.game_board[i][j] != None {
+                        winner = self.game_board[i][j]
+                    }
+                }
+            }
+        }
+
+        //ascending diagonal check
+
+        for i in 3..=5{
+            for j in 0..=3{
+                if self.game_board[i][j]== self.game_board[i-1][j+1] && self.game_board[i][j]== self.game_board[i-2][j+2] && self.game_board[i][j]== self.game_board[i-3][j+3] {
+                    if self.game_board[i][j] != None {
+                        winner = self.game_board[i][j]
+                    }
+                }
+            }
+        }
+
+        //descending diagonal check
+
+        for i in 3..=5{
+            for j in 3..=6{
+                if self.game_board[i][j]== self.game_board[i-1][j-1] && self.game_board[i][j]== self.game_board[i-2][j-2] && self.game_board[i][j]== self.game_board[i-3][j-3] {
+                    if self.game_board[i][j] != None {
+                        winner = self.game_board[i][j]
+                    }
+                }
+            }
+        }
+        
+        winner
+    }
+
+}
+
+fn to_board(json: Vec<Vec<usize>>) -> Board {
+    let mut board: Vec<Vec<Option<Player>>> = vec![vec![None; 7]; 6];
+    for i in 0..6{ //iterate through rows
+        for j in 0..7{//iterate thru cols
+            match json[i][j] {
+                1 => board[i][j] = Some(Player::Red),
+                2 => board[i][j] = Some(Player::Yellow),
+                _ => board[i][j] = None,   
+            }
+        }
+    }
+    let from_json =Board { game_board: board};
+    return from_json
+}
+
+fn play(current_player: Player, mut game: Board, col: usize) -> Vec<Vec<usize>> {
+    let mut current_move: Option<Move> = None;
+    current_move = Move::read_move(col, &current_player);
+    let current_move = current_move;
+    match current_move {
+        Some(e) => { game.update_board(e);
+                    return game.display();},
+        None => return game.display(),
+    }
+}
+
+async fn get_player(id: usize) -> usize {
+    match id%2 {
+        1 => return 1,
+        0 => return 2,
+        _ => panic!("does not divide")
+    }
 }
