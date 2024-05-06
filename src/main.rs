@@ -80,7 +80,7 @@ async fn connect(ws: WebSocket, users: Users) {
     // Bookkeeping
     let my_id = NEXT_USERID.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
     println!("Welcome User {}", my_id);
-    
+
     // Establishing a connection
     let (user_tx, mut user_rx) = ws.split();
     let (tx, rx) = mpsc::unbounded_channel();
@@ -91,9 +91,11 @@ async fn connect(ws: WebSocket, users: Users) {
     users.write().await.insert(my_id, tx);
 
     // Reading and broadcasting messages
+
     while let Some(result) = user_rx.next().await {
         //println!("Received message in serv: {:?}", result);
         //add user id to msg 
+
         broadcast_msg(result.expect("Failed to fetch message"), &users, my_id).await;
     }
 
@@ -155,8 +157,6 @@ async fn disconnect(my_id: usize, users: &Users) {
     println!("Good bye user {}", my_id);
     users.write().await.remove(&my_id);
 }
-
-
 
 // Custom rejection type for too many requests
 #[derive(Debug)]

@@ -122,7 +122,8 @@ function drawBoard() {
 }
 
 function dropPiece(col) {
-  if (uid %2 + 1 === currentPlayer){
+  console.log(uid);
+  //if (uid %2 + 1 === currentPlayer){
     for (let row = ROWS - 1; row >= 0; row--) {
         if (board[row][col] === 0) {
             board[row][col] = currentPlayer;
@@ -137,7 +138,7 @@ function dropPiece(col) {
             return;
         }
     }
-  }
+  //}
 }
 
 function checkForWin(row, col) {
