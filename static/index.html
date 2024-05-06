@@ -14,16 +14,13 @@
     <button id="btn">Send</button>
     <pre id="log"></pre>
     -->
+    <h2 id="player"></h2>
+    <h3 id="turn">Red goes first!</h3>
     <canvas id="connectFourCanvas" width="400" height="400"></canvas>
 
     <script src="/main.js"></script>
     <script>
-      canvas.addEventListener("click", function (event) {
-        const col = Math.floor(event.offsetX / CELL_SIZE);
-        dropPiece(col);
-    });
     drawBoard();
-
     </script>
   </body>
 </html>

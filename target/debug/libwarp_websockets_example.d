@@ -1,1 +1,1 @@
-/Users/Samuel/Desktop/Spring\ 2024/NextGen/rust_2/connect4sockets/warp-websockets-example/target/debug/libwarp_websockets_example.rlib: /Users/Samuel/Desktop/Spring\ 2024/NextGen/rust_2/connect4sockets/warp-websockets-example/src/lib.rs
+/Users/bowl/NextGen/Connect4Sockets/target/debug/libwarp_websockets_example.rlib: /Users/bowl/NextGen/Connect4Sockets/src/lib.rs
